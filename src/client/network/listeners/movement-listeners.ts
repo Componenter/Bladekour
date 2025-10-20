@@ -1,1 +1,1 @@
-// Movement listeners
+export function setupMovementListeners() {}

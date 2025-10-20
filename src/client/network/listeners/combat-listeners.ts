@@ -1,1 +1,1 @@
-// Combat listeners
+export function setupCombatListeners() {}

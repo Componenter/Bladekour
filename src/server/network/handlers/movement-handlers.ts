@@ -1,1 +1,1 @@
-// Movement handlers
+export function setupMovementHandlers() {}

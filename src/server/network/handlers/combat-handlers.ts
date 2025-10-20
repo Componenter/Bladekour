@@ -1,1 +1,1 @@
-// Combat handlers
+export function setupCombatHandlers() {}

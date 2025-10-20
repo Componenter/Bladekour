@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@rbxts/bytenet": "^0.4.3-tsprev4",
+    "@rbxts/profile-store": "^1.0.3",
     "@rbxts/profileservice": "^1.4.2",
     "@rbxts/rodux": "^3.0.0-ts.3",
     "@rbxts/services": "^1.6.0"

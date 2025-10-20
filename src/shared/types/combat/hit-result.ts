@@ -1,0 +1,1 @@
+// Hit result types

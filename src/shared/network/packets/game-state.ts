@@ -6,5 +6,10 @@ export const GameState = ByteNet.defineNamespace("GameState", () => {
 			value: ByteNet.unknown,
 			reliabilityType: "reliable",
 		}),
+
+		TransitionState: ByteNet.definePacket({
+			value: ByteNet.string,
+			reliabilityType: "reliable",
+		}),
 	};
 });

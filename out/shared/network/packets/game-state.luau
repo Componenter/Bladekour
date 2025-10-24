@@ -7,6 +7,10 @@ local GameState = ByteNet.defineNamespace("GameState", function()
 			value = ByteNet.unknown,
 			reliabilityType = "reliable",
 		}),
+		TransitionState = ByteNet.definePacket({
+			value = ByteNet.string,
+			reliabilityType = "reliable",
+		}),
 	}
 end)
 return {

@@ -1,11 +1,13 @@
 import { Players } from "@rbxts/services";
 import { game_state_actions, game_state_store } from "./game-state";
 import { GameState } from "shared/network/packets";
+import { combat_state_actions, combat_state_store } from "./combat-state";
 
 export function setup_server_states() {
 	function PlayerAdded(player: Player) {
 		player.CharacterAdded.Wait();
 		game_state_store.dispatch(game_state_actions.add_player(player));
+		combat_state_store.dispatch(combat_state_actions.add_player(player));
 
 		player.CharacterAdded.Connect(() => {
 			game_state_store.dispatch(game_state_actions.transition_to_menu(player));

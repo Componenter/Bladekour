@@ -1,10 +1,9 @@
 import Roact from "@rbxts/roact";
 import { store } from "../../store";
 import { play_button } from "./play-button";
-import { homepage } from "./home-page";
-import { settingspage } from "./settings-page";
+import { settings_button } from "./settings-button";
 
-export class menuframe extends Roact.Component<{}, { Visible: boolean }> {
+export class homepage extends Roact.Component<{}, { Visible: boolean }> {
 	protected state: Readonly<{ Visible: boolean }>;
 
 	constructor(props: {}) {
@@ -17,8 +16,8 @@ export class menuframe extends Roact.Component<{}, { Visible: boolean }> {
 		this.setState({ Visible: true });
 
 		store.changed.connect((newState, oldState) => {
-			if (newState.menu_visible !== oldState.menu_visible) {
-				this.setState({ ...this.state, Visible: newState.menu_visible });
+			if (newState.home_page_visible !== oldState.home_page_visible) {
+				this.setState({ ...this.state, Visible: newState.home_page_visible });
 			}
 		});
 	}
@@ -31,14 +30,14 @@ export class menuframe extends Roact.Component<{}, { Visible: boolean }> {
 				Size: new UDim2(1, 0, 1, 0),
 				Position: new UDim2(0, 0, 0, 0),
 
-				Transparency: 0.9,
+				Transparency: 1,
 
 				Visible: this.state.Visible,
 			},
 			{
 				// Children
-				home_page: Roact.createElement(homepage),
-				settings_page: Roact.createElement(settingspage),
+				play_button: play_button(),
+				settings_button: settings_button(),
 			},
 		);
 	}

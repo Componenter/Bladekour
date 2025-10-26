@@ -3,9 +3,9 @@ local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_incl
 local setupGameListeners = TS.import(script, script.Parent, "listeners", "game-listeners").setupGameListeners
 local setupCombatListeners = TS.import(script, script.Parent, "listeners", "combat-listeners").setupCombatListeners
 local setupMovementListeners = TS.import(script, script.Parent, "listeners", "movement-listeners").setupMovementListeners
-local function setupClientNetworking()
+local function setupClientNetworking(transitionManager)
 	-- Setup listeners
-	setupGameListeners()
+	setupGameListeners(transitionManager)
 	setupCombatListeners()
 	setupMovementListeners()
 end

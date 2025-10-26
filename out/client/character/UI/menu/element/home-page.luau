@@ -2,56 +2,56 @@
 local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("RuntimeLib"))
 local Roact = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@rbxts", "roact", "src", "ts")
 local store = TS.import(script, script.Parent.Parent.Parent, "store").store
-local homepage = TS.import(script, script.Parent, "home-page").homepage
-local settingspage = TS.import(script, script.Parent, "settings-page").settingspage
-local menuframe
+local play_button = TS.import(script, script.Parent, "play-button").play_button
+local settings_button = TS.import(script, script.Parent, "settings-button").settings_button
+local homepage
 do
 	local super = Roact.Component
-	menuframe = setmetatable({}, {
+	homepage = setmetatable({}, {
 		__tostring = function()
-			return "menuframe"
+			return "homepage"
 		end,
 		__index = super,
 	})
-	menuframe.__index = menuframe
-	function menuframe.new(...)
-		local self = setmetatable({}, menuframe)
+	homepage.__index = homepage
+	function homepage.new(...)
+		local self = setmetatable({}, homepage)
 		return self:constructor(...) or self
 	end
-	function menuframe:constructor(props)
+	function homepage:constructor(props)
 		super.constructor(self, props)
 		self.state = {
 			Visible = true,
 		}
 	end
-	function menuframe:didMount()
+	function homepage:didMount()
 		self:setState({
 			Visible = true,
 		})
 		store.changed:connect(function(newState, oldState)
-			if newState.menu_visible ~= oldState.menu_visible then
+			if newState.home_page_visible ~= oldState.home_page_visible then
 				local _self = self
 				local _object = table.clone(self.state)
 				setmetatable(_object, nil)
-				_object.Visible = newState.menu_visible
+				_object.Visible = newState.home_page_visible
 				_self:setState(_object)
 			end
 		end)
 	end
-	function menuframe:willUnmount()
+	function homepage:willUnmount()
 	end
-	function menuframe:render()
+	function homepage:render()
 		return Roact.createElement("Frame", {
 			Size = UDim2.new(1, 0, 1, 0),
 			Position = UDim2.new(0, 0, 0, 0),
-			Transparency = 0.9,
+			Transparency = 1,
 			Visible = self.state.Visible,
 		}, {
-			home_page = Roact.createElement(homepage),
-			settings_page = Roact.createElement(settingspage),
+			play_button = play_button(),
+			settings_button = settings_button(),
 		})
 	end
 end
 return {
-	menuframe = menuframe,
+	homepage = homepage,
 }

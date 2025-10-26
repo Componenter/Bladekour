@@ -5,10 +5,14 @@ local _game_state = TS.import(script, game:GetService("ServerScriptService"), "T
 local game_state_actions = _game_state.game_state_actions
 local game_state_store = _game_state.game_state_store
 local GameState = TS.import(script, game:GetService("ReplicatedStorage"), "TS", "network", "packets").GameState
+local _combat_state = TS.import(script, game:GetService("ServerScriptService"), "TS", "systems", "state", "combat-state")
+local combat_state_actions = _combat_state.combat_state_actions
+local combat_state_store = _combat_state.combat_state_store
 local function setup_server_states()
 	local function PlayerAdded(player)
 		player.CharacterAdded:Wait()
 		game_state_store:dispatch(game_state_actions.add_player(player))
+		combat_state_store:dispatch(combat_state_actions.add_player(player))
 		player.CharacterAdded:Connect(function()
 			game_state_store:dispatch(game_state_actions.transition_to_menu(player))
 			GameState.TransitionState.sendTo("Menu", player)

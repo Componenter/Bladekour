@@ -4,14 +4,12 @@ import { game_state_actions, game_state_store } from "shared/state/game-state";
 import { GameState } from "shared/network/packets";
 import { button } from "../component/button";
 
-export function play_button() {
+export function settings_button() {
 	return Roact.createElement(button, {
-		Position: new UDim2(0.07, 0, 0.25, 0),
-		Text: "PLAY",
+		Position: new UDim2(0.07, 0, 0.35, 0),
+		Text: "SETTINGS",
 		onClick: () => {
-			store.dispatch(Actions.toggle_menu());
-			game_state_store.dispatch(game_state_actions.spawn());
-			GameState.TransitionState.send("Playing");
+			store.dispatch(Actions.go_settings());
 		},
 	});
 }

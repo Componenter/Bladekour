@@ -2,7 +2,12 @@
 local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("RuntimeLib"))
 local ByteNet = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@rbxts", "bytenet", "src")
 local Combat = ByteNet.defineNamespace("Combat", function()
-	return {}
+	return {
+		Attack = ByteNet.definePacket({
+			value = ByteNet.nothing,
+			reliabilityType = "reliable",
+		}),
+	}
 end)
 return {
 	Combat = Combat,

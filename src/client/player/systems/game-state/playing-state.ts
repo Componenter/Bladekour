@@ -4,6 +4,8 @@ import { InputManager } from "../input/input-manager";
 import { InputAction } from "../input/types";
 import { InputMiddlewareChain } from "../input/input-middleware-chain";
 import { StateMiddleware } from "client/player/network/middleware/send/state-middleware";
+import { AttackData } from "shared/types/combat/attack";
+import { Players } from "@rbxts/services";
 
 export class PlayingState {
 	private inputManager: InputManager;
@@ -16,12 +18,20 @@ export class PlayingState {
 	}
 
 	enter() {
+		const mouse = Players.LocalPlayer.GetMouse();
+
 		this.inputManager.enable();
 
 		// Subscribe to actions
 		this.inputManager.onAction(InputAction.Attack, (event) => {
 			if (!this.middleware.validate(event)) return;
-			Combat.Attack.send();
+			const AttackData = {
+				attackType: "Light",
+				mousePosition: new Vector3(mouse.X, mouse.Y, 0),
+				timestamp: tick(),
+			} as AttackData;
+
+			Combat.Attack.send(AttackData);
 		});
 	}
 

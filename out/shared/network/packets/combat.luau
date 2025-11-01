@@ -4,7 +4,7 @@ local ByteNet = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_i
 local Combat = ByteNet.defineNamespace("Combat", function()
 	return {
 		Attack = ByteNet.definePacket({
-			value = ByteNet.nothing,
+			value = ByteNet.unknown,
 			reliabilityType = "reliable",
 		}),
 	}

@@ -1,4 +1,4 @@
-import { Workspace } from "@rbxts/services";
+import { Players, Workspace } from "@rbxts/services";
 import { game_state_store } from "shared/state/game-state";
 
 export function setup_menu_camera() {
@@ -28,6 +28,7 @@ export function setup_menu_camera() {
 			);
 		} else {
 			camera.CameraType = Enum.CameraType.Custom;
+			camera.CameraSubject = (Players.LocalPlayer.Character as Model).FindFirstChildOfClass("Humanoid");
 		}
 	}
 }

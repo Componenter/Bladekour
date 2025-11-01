@@ -1,6 +1,8 @@
 -- Compiled with roblox-ts v3.0.0
 local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("RuntimeLib"))
-local Workspace = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@rbxts", "services").Workspace
+local _services = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@rbxts", "services")
+local Players = _services.Players
+local Workspace = _services.Workspace
 local game_state_store = TS.import(script, game:GetService("ReplicatedStorage"), "TS", "state", "game-state").game_state_store
 local function setup_menu_camera()
 	local camera = Workspace.CurrentCamera
@@ -29,6 +31,7 @@ local function setup_menu_camera()
 			camera.CFrame = _cFrame * _arg0
 		else
 			camera.CameraType = Enum.CameraType.Custom
+			camera.CameraSubject = (Players.LocalPlayer.Character):FindFirstChildOfClass("Humanoid")
 		end
 	end
 end

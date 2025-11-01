@@ -3,10 +3,14 @@ import { RateLimiterMiddleware } from "../middleware/anti-cheat/rate-limiter-mid
 import { Combat } from "shared/network/packets";
 import { PacketContext } from "shared/network/middleware/types";
 import ProfileCache from "server/data/player-data-store";
-import { combat_state_actions, combat_state_store } from "server/systems/state/combat-state";
 import { StateMiddleware } from "../middleware/anti-cheat/state-middleware";
+import { CombatSystem } from "server/systems/combat/combat-system";
+import { PlayerManager } from "server/systems/player/player-manager";
+import { HitResolver } from "server/systems/combat/hit-resolver";
+import { DamageHandler } from "server/systems/combat/damage-handler";
+import { AttackData } from "shared/types/combat/attack";
 
-export function setupCombatHandlers() {
+export function setupCombatHandlers(combatSystem: CombatSystem) {
 	const chain = new MiddlewareChain().use(RateLimiterMiddleware).use(StateMiddleware);
 
 	Combat.Attack.listen((data, player?: Player) => {
@@ -20,10 +24,7 @@ export function setupCombatHandlers() {
 		};
 
 		chain.execute(context, (ctx) => {
-			combat_state_store.dispatch(combat_state_actions.attack(player));
-			Combat.Attack.sendTo(undefined, player);
-			task.wait(0.5);
-			combat_state_store.dispatch(combat_state_actions.stop_attack(player));
+			combatSystem.processAttack(player, ctx.packet as AttackData);
 		});
 	});
 }

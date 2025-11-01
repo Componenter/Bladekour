@@ -4,6 +4,7 @@ local Combat = TS.import(script, game:GetService("ReplicatedStorage"), "TS", "ne
 local InputAction = TS.import(script, script.Parent.Parent, "input", "types").InputAction
 local InputMiddlewareChain = TS.import(script, script.Parent.Parent, "input", "input-middleware-chain").InputMiddlewareChain
 local StateMiddleware = TS.import(script, script.Parent.Parent.Parent, "network", "middleware", "send", "state-middleware").StateMiddleware
+local Players = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@rbxts", "services").Players
 local PlayingState
 do
 	PlayingState = setmetatable({}, {
@@ -21,13 +22,19 @@ do
 		self.middleware = InputMiddlewareChain.new():use(StateMiddleware.new())
 	end
 	function PlayingState:enter()
+		local mouse = Players.LocalPlayer:GetMouse()
 		self.inputManager:enable()
 		-- Subscribe to actions
 		self.inputManager:onAction(InputAction.Attack, function(event)
 			if not self.middleware:validate(event) then
 				return nil
 			end
-			Combat.Attack.send()
+			local AttackData = {
+				attackType = "Light",
+				mousePosition = Vector3.new(mouse.X, mouse.Y, 0),
+				timestamp = tick(),
+			}
+			Combat.Attack.send(AttackData)
 		end)
 	end
 	function PlayingState:exit()

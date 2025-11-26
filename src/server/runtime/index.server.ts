@@ -8,6 +8,7 @@ import { ComboTracker } from "server/systems/combat/combo-tracker";
 import { DamageHandler } from "server/systems/combat/damage-handler";
 import { HitResolver } from "server/systems/combat/hit-resolver";
 import { setup_server_game_state_managers } from "server/systems/game-state/setup";
+import { GrappleSystem } from "server/systems/movement/grapple-system";
 import { PlayerManager } from "server/systems/player/player-manager";
 import { setup_server_states } from "server/systems/state/setup";
 
@@ -28,6 +29,8 @@ task.spawn(() => {
 const hitResolver = new HitResolver(playerManager);
 const damageHandler = new DamageHandler(playerManager);
 const comboTracker = new ComboTracker();
-const combatSystem = new CombatSystem(playerManager, hitResolver, damageHandler, comboTracker);
 
-task.spawn(setupNetworking, combatSystem);
+const combatSystem = new CombatSystem(playerManager, hitResolver, damageHandler, comboTracker);
+const grappleSystem = new GrappleSystem(playerManager);
+
+task.spawn(setupNetworking, combatSystem, grappleSystem);

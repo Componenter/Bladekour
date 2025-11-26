@@ -25,6 +25,9 @@ export class InputManager {
 		this.keyboardHandler.on(InputAction.Jump, (event) => this.handleInput(event));
 		this.keyboardHandler.on(InputAction.Dash, (event) => this.handleInput(event));
 
+		this.keyboardHandler.on(InputAction.W, (event) => this.handleInput(event));
+		this.keyboardHandler.on(InputAction.S, (event) => this.handleInput(event));
+
 		this.mouseHandler.on(InputAction.Attack, (event) => this.handleInput(event));
 		this.mouseHandler.on(InputAction.StartGrapple, (event) => this.handleInput(event));
 		this.mouseHandler.on(InputAction.ReleaseGrapple, (event) => this.handleInput(event));

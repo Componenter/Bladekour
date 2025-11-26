@@ -43,6 +43,7 @@ do
 			isDead = false,
 			isAttacking = false,
 			lastAttackTime = 0,
+			isGrappling = false,
 		}
 		print(`Player state created: {player.Name}`)
 	end

@@ -5,6 +5,8 @@ export enum InputAction {
 	ReleaseGrapple = "ReleaseGrapple",
 	Jump = "Jump",
 	Dash = "Dash",
+	W = "W",
+	S = "S",
 }
 
 export interface InputEvent {

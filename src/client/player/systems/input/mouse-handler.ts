@@ -8,7 +8,10 @@ export class MouseHandler {
 	private callbacks = new Map<InputAction, Set<(event: InputEvent) => void>>();
 
 	initialize() {
-		// Left click
+		// Left/Right click
+
+		let GrappleToggle = false;
+
 		UserInputService.InputBegan.Connect((input, gameProcessed) => {
 			if (gameProcessed) return;
 
@@ -19,18 +22,17 @@ export class MouseHandler {
 			}
 
 			if (input.UserInputType === Enum.UserInputType.MouseButton2) {
-				this.triggerAction(InputAction.StartGrapple, {
-					position: mouse.Hit.Position,
-				});
-			}
-		});
+				if (GrappleToggle) {
+					GrappleToggle = false;
 
-		// Right click release
-		UserInputService.InputEnded.Connect((input, gameProcessed) => {
-			if (gameProcessed) return;
-
-			if (input.UserInputType === Enum.UserInputType.MouseButton2) {
-				this.triggerAction(InputAction.ReleaseGrapple);
+					this.triggerAction(InputAction.ReleaseGrapple);
+				} else {
+					GrappleToggle = true;
+					this.triggerAction(InputAction.StartGrapple, {
+						position: mouse.Hit.Position,
+						mouseHit: mouse.Target,
+					});
+				}
 			}
 		});
 	}

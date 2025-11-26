@@ -6,6 +6,8 @@ export interface PlayerState {
 	isDead: boolean;
 	isAttacking: boolean;
 	lastAttackTime: number;
+
+	isGrappling: boolean;
 }
 
 export class PlayerManager {
@@ -26,6 +28,8 @@ export class PlayerManager {
 			isDead: false,
 			isAttacking: false,
 			lastAttackTime: 0,
+
+			isGrappling: false,
 		});
 
 		print(`Player state created: ${player.Name}`);

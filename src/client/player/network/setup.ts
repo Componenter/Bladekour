@@ -6,6 +6,7 @@ import { HitFeedback } from "../systems/combat/hit-feedback";
 import { SwordTrails } from "../systems/effects/visual-effects/sword-trails";
 import { WeaponAnimator } from "../systems/combat/weapon-animator";
 import { CombatSounds } from "../systems/effects/audio-effects/combat-sounds";
+import { GrappleRope } from "../systems/effects/visual-effects/grapple-rope";
 
 export function setupClientNetworking(transitionManager: TransitionManager) {
 	const hitFeedback = new HitFeedback();
@@ -20,8 +21,10 @@ export function setupClientNetworking(transitionManager: TransitionManager) {
 	const swordTrails = new SwordTrails();
 	swordTrails.initialize();
 
+	const grappleRope = new GrappleRope();
+
 	// Setup listeners
-	setupGameListeners(transitionManager, hitFeedback, combatSounds);
+	setupGameListeners(transitionManager, hitFeedback, combatSounds, grappleRope);
 	setupCombatListeners(weaponAnimator);
 	setupMovementListeners();
 }

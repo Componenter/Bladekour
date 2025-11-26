@@ -1,4 +1,4 @@
-import ByteNet from "@rbxts/bytenet";
+import ByteNet, { unknown } from "@rbxts/bytenet";
 
 export const GameState = ByteNet.defineNamespace("GameState", () => {
 	return {

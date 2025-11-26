@@ -22,7 +22,8 @@ do
 		self.callbacks = {}
 	end
 	function MouseHandler:initialize()
-		-- Left click
+		-- Left/Right click
+		local GrappleToggle = false
 		UserInputService.InputBegan:Connect(function(input, gameProcessed)
 			if gameProcessed then
 				return nil
@@ -33,18 +34,16 @@ do
 				})
 			end
 			if input.UserInputType == Enum.UserInputType.MouseButton2 then
-				self:triggerAction(InputAction.StartGrapple, {
-					position = mouse.Hit.Position,
-				})
-			end
-		end)
-		-- Right click release
-		UserInputService.InputEnded:Connect(function(input, gameProcessed)
-			if gameProcessed then
-				return nil
-			end
-			if input.UserInputType == Enum.UserInputType.MouseButton2 then
-				self:triggerAction(InputAction.ReleaseGrapple)
+				if GrappleToggle then
+					GrappleToggle = false
+					self:triggerAction(InputAction.ReleaseGrapple)
+				else
+					GrappleToggle = true
+					self:triggerAction(InputAction.StartGrapple, {
+						position = mouse.Hit.Position,
+						mouseHit = mouse.Target,
+					})
+				end
 			end
 		end)
 	end

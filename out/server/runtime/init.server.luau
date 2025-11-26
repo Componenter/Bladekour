@@ -8,6 +8,7 @@ local ComboTracker = TS.import(script, game:GetService("ServerScriptService"), "
 local DamageHandler = TS.import(script, game:GetService("ServerScriptService"), "TS", "systems", "combat", "damage-handler").DamageHandler
 local HitResolver = TS.import(script, game:GetService("ServerScriptService"), "TS", "systems", "combat", "hit-resolver").HitResolver
 local setup_server_game_state_managers = TS.import(script, game:GetService("ServerScriptService"), "TS", "systems", "game-state", "setup").setup_server_game_state_managers
+local GrappleSystem = TS.import(script, game:GetService("ServerScriptService"), "TS", "systems", "movement", "grapple-system").GrappleSystem
 local PlayerManager = TS.import(script, game:GetService("ServerScriptService"), "TS", "systems", "player", "player-manager").PlayerManager
 local setup_server_states = TS.import(script, game:GetService("ServerScriptService"), "TS", "systems", "state", "setup").setup_server_states
 task.spawn(function()
@@ -25,4 +26,5 @@ local hitResolver = HitResolver.new(playerManager)
 local damageHandler = DamageHandler.new(playerManager)
 local comboTracker = ComboTracker.new()
 local combatSystem = CombatSystem.new(playerManager, hitResolver, damageHandler, comboTracker)
-task.spawn(setupNetworking, combatSystem)
+local grappleSystem = GrappleSystem.new(playerManager)
+task.spawn(setupNetworking, combatSystem, grappleSystem)

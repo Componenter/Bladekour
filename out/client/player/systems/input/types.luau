@@ -6,6 +6,8 @@ local InputAction = {
 	ReleaseGrapple = "ReleaseGrapple",
 	Jump = "Jump",
 	Dash = "Dash",
+	W = "W",
+	S = "S",
 }
 return {
 	InputAction = InputAction,

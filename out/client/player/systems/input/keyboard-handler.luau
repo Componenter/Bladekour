@@ -21,6 +21,8 @@ do
 			[Enum.KeyCode.F] = InputAction.Block,
 			[Enum.KeyCode.Space] = InputAction.Jump,
 			[Enum.KeyCode.LeftShift] = InputAction.Dash,
+			[Enum.KeyCode.W] = InputAction.W,
+			[Enum.KeyCode.S] = InputAction.S,
 		}
 	end
 	function KeyboardHandler:initialize()

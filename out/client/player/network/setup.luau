@@ -7,6 +7,7 @@ local HitFeedback = TS.import(script, script.Parent.Parent, "systems", "combat",
 local SwordTrails = TS.import(script, script.Parent.Parent, "systems", "effects", "visual-effects", "sword-trails").SwordTrails
 local WeaponAnimator = TS.import(script, script.Parent.Parent, "systems", "combat", "weapon-animator").WeaponAnimator
 local CombatSounds = TS.import(script, script.Parent.Parent, "systems", "effects", "audio-effects", "combat-sounds").CombatSounds
+local GrappleRope = TS.import(script, script.Parent.Parent, "systems", "effects", "visual-effects", "grapple-rope").GrappleRope
 local function setupClientNetworking(transitionManager)
 	local hitFeedback = HitFeedback.new()
 	hitFeedback:initialize()
@@ -16,8 +17,9 @@ local function setupClientNetworking(transitionManager)
 	weaponAnimator:initialize()
 	local swordTrails = SwordTrails.new()
 	swordTrails:initialize()
+	local grappleRope = GrappleRope.new()
 	-- Setup listeners
-	setupGameListeners(transitionManager, hitFeedback, combatSounds)
+	setupGameListeners(transitionManager, hitFeedback, combatSounds, grappleRope)
 	setupCombatListeners(weaponAnimator)
 	setupMovementListeners()
 end

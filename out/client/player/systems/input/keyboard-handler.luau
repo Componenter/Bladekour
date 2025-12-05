@@ -46,6 +46,18 @@ do
 			if input.KeyCode == Enum.KeyCode.E then
 				-- Could trigger "StopBlocking" action
 			end
+			if input.KeyCode == Enum.KeyCode.W then
+				local _self = self
+				local _keyBindings = self.keyBindings
+				local _w = Enum.KeyCode.W
+				_self:triggerAction(_keyBindings[_w])
+			end
+			if input.KeyCode == Enum.KeyCode.S then
+				local _self = self
+				local _keyBindings = self.keyBindings
+				local _s = Enum.KeyCode.S
+				_self:triggerAction(_keyBindings[_s])
+			end
 		end)
 	end
 	function KeyboardHandler:on(action, callback)

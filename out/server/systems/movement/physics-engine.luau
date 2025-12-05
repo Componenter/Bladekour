@@ -16,24 +16,29 @@ do
 		return self:constructor(...) or self
 	end
 	function GrapplePhysics:constructor()
-		self.physicsStates = {}
-		self.grappleConnections = {}
-		self.pendulumVelocities = {}
-		self.grapplePoints = {}
-		self.ropeLengths = {}
+		self.connections = {}
+		self.playerInputVelocities = {}
+		self.playerInputKey = {}
+		self.playerAngularVelocity = {}
 		self.GRAVITY = 196.2
-		self.DAMPING = 0.92
+		self.MAXANGLE = math.rad(89)
+		self.MAXINPUTFORCE = 10
+		self.MAXANGULARVELOCITY = 10
 	end
 	function GrapplePhysics:findFloorY(character)
 		local leftLeg = character:FindFirstChild("Left Leg")
 		if leftLeg then
 			local _position = leftLeg.Position
-			local _arg0 = leftLeg.Size / 2
-			local charBottomPosition = _position - _arg0
+			local _vector3 = Vector3.new(20, 20, 20)
+			local charBottomPosition = _position + _vector3
+			-- Create fresh raycast params each time
 			local raycastParams = RaycastParams.new()
-			raycastParams.FilterType = Enum.RaycastFilterType.Include
-			raycastParams.FilterDescendantsInstances = Workspace:WaitForChild("Map"):GetDescendants()
+			raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+			raycastParams.FilterDescendantsInstances = { character }
 			local raycastResults = Workspace:Raycast(charBottomPosition, Vector3.new(0, -100, 0), raycastParams)
+			print("Starting position: ", charBottomPosition)
+			print("Raycast params: ", raycastParams)
+			print("Results: ", raycastResults)
 			if raycastResults and raycastResults.Instance then
 				return raycastResults.Position.Y
 			end
@@ -41,205 +46,164 @@ do
 		return nil
 	end
 	function GrapplePhysics:startGrapple(player, hitPosition)
-		print("=== STARTING GRAPPLE ===")
-		print("Hit position:", hitPosition)
 		local character = player.Character
-		local hrp = character:WaitForChild("HumanoidRootPart", 4)
-		local humanoid = character:WaitForChild("Humanoid", 4)
-		if not hrp or not humanoid then
-			print("ERROR: Missing HRP or Humanoid")
+		local root = character:FindFirstChild("HumanoidRootPart")
+		local groundLevel = self:findFloorY(character)
+		if not (groundLevel ~= 0 and groundLevel == groundLevel and groundLevel) then
 			return nil
 		end
-		local _physicsStates = self.physicsStates
+		local _connections = self.connections
 		local _player = player
-		if _physicsStates[_player] == true then
-			print("Stopping previous grapple")
-			self:stopGrapple(player)
+		if _connections[_player] then
+			return nil
 		end
-		local initialPos = hrp.Position
-		local _hitPosition = hitPosition
-		local ropeLength = (initialPos - _hitPosition).Magnitude * 0.7
-		print("Rope length:", ropeLength)
-		hrp:SetNetworkOwner(player)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
-		humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-		local velocity = hrp.AssemblyLinearVelocity
-		if velocity.Magnitude < 5 then
-			local toGrapple = (hitPosition - initialPos).Unit
-			local horizontalDir = Vector3.new(toGrapple.X, 0, toGrapple.Z).Unit
-			local _exp = horizontalDir * 15
-			local _vector3 = Vector3.new(0, 8, 0)
-			velocity = _exp + _vector3
-		end
-		print("Initial velocity:", velocity)
-		local _physicsStates_1 = self.physicsStates
+		local ropeLength = (55 / 100) * (hitPosition.Y - groundLevel)
+		local downVector = Vector3.new(0, -1, 0)
+		local angularVelocity = 0
+		root.Anchored = true
+		local _playerInputVelocities = self.playerInputVelocities
 		local _player_1 = player
-		_physicsStates_1[_player_1] = true
-		local _pendulumVelocities = self.pendulumVelocities
+		local _value = _playerInputVelocities[_player_1]
+		if not (_value ~= 0 and _value == _value and _value) then
+			local _playerInputVelocities_1 = self.playerInputVelocities
+			local _player_2 = player
+			_playerInputVelocities_1[_player_2] = 1
+		end
+		local swingDirection = root.CFrame.LookVector
+		local _position = root.Position
+		local _hitPosition = hitPosition
+		local ropeVector = _position - _hitPosition
+		local theta = math.acos(ropeVector.Unit:Dot(downVector))
+		local _connections_1 = self.connections
 		local _player_2 = player
-		local _velocity = velocity
-		_pendulumVelocities[_player_2] = _velocity
-		local _grapplePoints = self.grapplePoints
-		local _player_3 = player
-		local _hitPosition_1 = hitPosition
-		_grapplePoints[_player_3] = _hitPosition_1
-		local _ropeLengths = self.ropeLengths
-		local _player_4 = player
-		_ropeLengths[_player_4] = ropeLength
-		print("Creating Heartbeat connection...")
-		local connection
-		connection = RunService.Heartbeat:Connect(function(dt)
-			local _physicsStates_2 = self.physicsStates
-			local _player_5 = player
-			if _physicsStates_2[_player_5] ~= true then
-				connection:Disconnect()
-				return nil
-			end
-			local _pendulumVelocities_1 = self.pendulumVelocities
-			local _player_6 = player
-			local currentVelocity = _pendulumVelocities_1[_player_6]
-			local _grapplePoints_1 = self.grapplePoints
-			local _player_7 = player
-			local grapplePoint = _grapplePoints_1[_player_7]
-			local _ropeLengths_1 = self.ropeLengths
-			local _player_8 = player
-			local ropeLen = _ropeLengths_1[_player_8]
-			if not currentVelocity or not grapplePoint or not (ropeLen ~= 0 and ropeLen == ropeLen and ropeLen) then
-				self:stopGrapple(player)
-				return nil
-			end
-			local position = hrp.Position
-			-- First, constrain to rope length
-			local ropeVector = position - grapplePoint
-			local currentLength = ropeVector.Magnitude
-			local constrainedPosition = position
-			if currentLength > ropeLen then
-				local _arg0 = ropeVector.Unit * ropeLen
-				constrainedPosition = grapplePoint + _arg0
-				hrp.CFrame = CFrame.new(constrainedPosition)
-			end
-			-- Now calculate physics from the constrained position
-			local finalRopeVector = constrainedPosition - grapplePoint
-			local ropeDirection = finalRopeVector.Unit
-			-- Apply gravity tangentially
-			local gravityForce = Vector3.new(0, -self.GRAVITY, 0)
-			local _arg0 = gravityForce:Dot(ropeDirection)
-			local radialComponent = ropeDirection * _arg0
-			local tangentialComponent = gravityForce - radialComponent
-			local _currentVelocity = currentVelocity
-			local _dt = dt
-			local _arg0_1 = tangentialComponent * _dt
-			currentVelocity = _currentVelocity + _arg0_1
-			local _currentVelocity_1 = currentVelocity
-			local _dAMPING = self.DAMPING
-			currentVelocity = _currentVelocity_1 * _dAMPING
-			-- Project velocity to be tangent to rope
-			local radialVelocity = currentVelocity:Dot(ropeDirection)
-			local _currentVelocity_2 = currentVelocity
-			local _arg0_2 = ropeDirection * radialVelocity
-			currentVelocity = _currentVelocity_2 - _arg0_2
-			-- Calculate new position
-			local _constrainedPosition = constrainedPosition
-			local _currentVelocity_3 = currentVelocity
-			local _dt_1 = dt
-			local newPosition = _constrainedPosition + (_currentVelocity_3 * _dt_1)
-			-- Final constraint
-			local newRopeVector = newPosition - grapplePoint
-			local newLength = newRopeVector.Magnitude
-			if newLength > ropeLen then
-				local _arg0_3 = newRopeVector.Unit * ropeLen
-				local finalPos = grapplePoint + _arg0_3
-				hrp.CFrame = CFrame.new(finalPos)
+		local _arg1 = RunService.Heartbeat:Connect(function(deltaTime)
+			local angularAcceleration = -(self.GRAVITY / ropeLength) * math.sin(theta)
+			angularVelocity = angularVelocity + angularAcceleration * deltaTime
+			local _playerInputVelocities_1 = self.playerInputVelocities
+			local _player_3 = player
+			local inputVelocity = _playerInputVelocities_1[_player_3]
+			local _playerInputKey = self.playerInputKey
+			local _player_4 = player
+			if _playerInputKey[_player_4] == "W" then
+				local _playerInputVelocities_2 = self.playerInputVelocities
+				local _player_5 = player
+				local _arg1_1 = inputVelocity + 0.1
+				_playerInputVelocities_2[_player_5] = _arg1_1
 			else
-				hrp.CFrame = CFrame.new(newPosition)
+				local _playerInputKey_1 = self.playerInputKey
+				local _player_5 = player
+				if _playerInputKey_1[_player_5] == "S" then
+					local _playerInputVelocities_2 = self.playerInputVelocities
+					local _player_6 = player
+					local _arg1_1 = inputVelocity - 0.2
+					_playerInputVelocities_2[_player_6] = _arg1_1
+				end
 			end
-			local _pendulumVelocities_2 = self.pendulumVelocities
-			local _player_9 = player
-			local _currentVelocity_4 = currentVelocity
-			_pendulumVelocities_2[_player_9] = _currentVelocity_4
-			local floorY = self:findFloorY(character)
-			local _condition = floorY
-			if _condition ~= 0 and _condition == _condition and _condition then
-				_condition = hrp.Position.Y <= floorY + 4 and currentVelocity.Y < -15
+			local _playerInputVelocities_2 = self.playerInputVelocities
+			local _exp = player
+			local _playerInputVelocities_3 = self.playerInputVelocities
+			local _player_5 = player
+			local _arg1_1 = math.clamp(_playerInputVelocities_3[_player_5], -self.MAXINPUTFORCE, self.MAXINPUTFORCE)
+			_playerInputVelocities_2[_exp] = _arg1_1
+			local _playerInputVelocities_4 = self.playerInputVelocities
+			local _player_6 = player
+			local _value_1 = _playerInputVelocities_4[_player_6]
+			if _value_1 ~= 0 and _value_1 == _value_1 and _value_1 then
+				local _condition = inputVelocity
+				if _condition ~= 0 and _condition == _condition and _condition then
+					_condition = inputVelocity ~= 1
+				end
+				if _condition ~= 0 and _condition == _condition and _condition then
+					if inputVelocity < 0 then
+						angularVelocity = angularVelocity - inputVelocity * deltaTime
+					else
+						angularVelocity = angularVelocity + inputVelocity * deltaTime
+					end
+				end
 			end
-			if _condition ~= 0 and _condition == _condition and _condition then
-				self:stopGrapple(player)
+			swingDirection = root.CFrame.LookVector
+			theta = theta + angularVelocity * deltaTime
+			if theta > self.MAXANGLE then
+				theta = self.MAXANGLE
+				angularVelocity = -angularVelocity * 1.01
 			end
+			if theta < -self.MAXANGLE then
+				-- Changed from -MAXANGLE to 0
+				theta = -self.MAXANGLE
+				angularVelocity = -angularVelocity * 1.01
+			end
+			angularVelocity = math.clamp(angularVelocity, -self.MAXANGULARVELOCITY, self.MAXANGULARVELOCITY)
+			local _playerAngularVelocity = self.playerAngularVelocity
+			local _player_7 = player
+			local _angularVelocity = angularVelocity
+			_playerAngularVelocity[_player_7] = _angularVelocity
+			local _swingDirection = swingDirection
+			local _arg0 = ropeLength * math.sin(theta)
+			local horizontalOffset = _swingDirection * _arg0
+			local verticalOffset = Vector3.new(0, -ropeLength * math.cos(theta), 0)
+			local newPosition = hitPosition + horizontalOffset + verticalOffset
+			root.Position = newPosition
 		end)
-		local _grappleConnections = self.grappleConnections
-		local _player_5 = player
-		_grappleConnections[_player_5] = connection
-		print("=== GRAPPLE STARTED ===")
+		_connections_1[_player_2] = _arg1
 	end
 	function GrapplePhysics:applySwingInput(player, inputDirection)
-		local _pendulumVelocities = self.pendulumVelocities
+		local _connections = self.connections
 		local _player = player
-		local currentVelocity = _pendulumVelocities[_player]
-		local _physicsStates = self.physicsStates
-		local _player_1 = player
-		local isGrappling = _physicsStates[_player_1]
-		if not currentVelocity and isGrappling then
-			local character = player.Character
-			local _result = character
-			if _result ~= nil then
-				_result = _result:WaitForChild("HumanoidRootPart")
+		if not _connections[_player] then
+			return nil
+		end
+		if inputDirection ~= nil then
+			if inputDirection == -1 then
+				local _playerInputKey = self.playerInputKey
+				local _player_1 = player
+				_playerInputKey[_player_1] = "S"
 			end
-			local hrp = _result
-			if hrp then
-				local vel = hrp.AssemblyLinearVelocity
-				local _pendulumVelocities_1 = self.pendulumVelocities
-				local _player_2 = player
-				_pendulumVelocities_1[_player_2] = vel
-				local swingForce = inputDirection * 25
-				local newVelocity = vel + swingForce
-				local _pendulumVelocities_2 = self.pendulumVelocities
-				local _player_3 = player
-				_pendulumVelocities_2[_player_3] = newVelocity
-				print("Applied swing! New velocity:", newVelocity)
+			if inputDirection == 1 then
+				local _playerInputKey = self.playerInputKey
+				local _player_1 = player
+				_playerInputKey[_player_1] = "W"
 			end
-		elseif currentVelocity and isGrappling then
-			local swingForce = inputDirection * 25
-			local newVelocity = currentVelocity + swingForce
-			local _pendulumVelocities_1 = self.pendulumVelocities
-			local _player_2 = player
-			_pendulumVelocities_1[_player_2] = newVelocity
-			print("Applied swing! New velocity:", newVelocity)
+			if inputDirection == 0 then
+				local _playerInputKey = self.playerInputKey
+				local _player_1 = player
+				_playerInputKey[_player_1] = "None"
+			end
 		end
 	end
 	function GrapplePhysics:stopGrapple(player)
-		local _physicsStates = self.physicsStates
+		local _connections = self.connections
 		local _player = player
-		if _physicsStates[_player] ~= true then
-			return nil
+		local _result = _connections[_player]
+		if _result ~= nil then
+			_result:Disconnect()
 		end
-		print("Stopping grapple for", player.Name)
-		local _physicsStates_1 = self.physicsStates
+		local _connections_1 = self.connections
 		local _player_1 = player
-		_physicsStates_1[_player_1] = false
-		local _grappleConnections = self.grappleConnections
-		local _player_2 = player
-		local connection = _grappleConnections[_player_2]
-		if connection then
-			connection:Disconnect()
-			local _grappleConnections_1 = self.grappleConnections
-			local _player_3 = player
-			_grappleConnections_1[_player_3] = nil
+		_connections_1[_player_1] = nil
+		local _result_1 = player.Character
+		if _result_1 ~= nil then
+			_result_1 = _result_1:FindFirstChild("HumanoidRootPart")
 		end
-		local _pendulumVelocities = self.pendulumVelocities
-		local _player_3 = player
-		_pendulumVelocities[_player_3] = nil
-		local _grapplePoints = self.grapplePoints
-		local _player_4 = player
-		_grapplePoints[_player_4] = nil
-		local _ropeLengths = self.ropeLengths
-		local _player_5 = player
-		_ropeLengths[_player_5] = nil
-		local character = player.Character
-		if character then
-			local humanoid = character:FindFirstChild("Humanoid")
-			if humanoid then
-				humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
-			end
+		local root = _result_1
+		root.Anchored = false
+		local _playerAngularVelocity = self.playerAngularVelocity
+		local _player_2 = player
+		local angularVelocity = _playerAngularVelocity[_player_2]
+		if angularVelocity ~= 0 and angularVelocity == angularVelocity and angularVelocity then
+			local bodyVelocity = Instance.new("BodyVelocity", root)
+			bodyVelocity.Velocity = Vector3.new(angularVelocity ^ 2, angularVelocity ^ 2, 0)
+			task.delay(0.9, function()
+				bodyVelocity:Destroy()
+				local _playerAngularVelocity_1 = self.playerAngularVelocity
+				local _player_3 = player
+				_playerAngularVelocity_1[_player_3] = 0
+				local _playerInputVelocities = self.playerInputVelocities
+				local _player_4 = player
+				_playerInputVelocities[_player_4] = 1
+				local _playerInputKey = self.playerInputKey
+				local _player_5 = player
+				_playerInputKey[_player_5] = "None"
+			end)
 		end
 	end
 end

@@ -35,14 +35,30 @@ export class PlayingState {
 			Combat.Attack.send(AttackData);
 		});
 
+		let W = false;
+		let S = false;
+
 		this.inputManager.onAction(InputAction.W, (event) => {
 			if (!this.middleware.validate(event)) return;
-			Movement.GrappleMovement.send("W");
+			let sendArgument = "W";
+			S = false;
+
+			if (W) {
+				sendArgument = "None";
+			}
+			Movement.GrappleMovement.send(sendArgument);
+			W = !W;
 		});
 
 		this.inputManager.onAction(InputAction.S, (event) => {
 			if (!this.middleware.validate(event)) return;
-			Movement.GrappleMovement.send("S");
+			let sendArgument = "S";
+			W = false;
+			if (S) {
+				sendArgument = "None";
+			}
+			Movement.GrappleMovement.send(sendArgument);
+			S = !S;
 		});
 
 		this.inputManager.onAction(InputAction.StartGrapple, (event) => {

@@ -1,22 +1,32 @@
-import { Workspace, RunService } from "@rbxts/services";
+import { Workspace, RunService, TextChatService } from "@rbxts/services";
 
 export class GrapplePhysics {
-	private physicsStates = new Map<Player, boolean>();
-	private grappleConnections = new Map<Player, RBXScriptConnection>();
-	private pendulumVelocities = new Map<Player, Vector3>();
-	private grapplePoints = new Map<Player, Vector3>();
-	private ropeLengths = new Map<Player, number>();
+	private connections = new Map<Player, RBXScriptConnection>();
+	private playerInputVelocities = new Map<Player, number>();
+	private playerInputKey = new Map<Player, "W" | "S" | "None">();
+	private playerAngularVelocity = new Map<Player, number>();
+
 	private readonly GRAVITY = 196.2;
-	private readonly DAMPING = 0.92;
+	private readonly MAXANGLE = math.rad(89);
+	private readonly MAXINPUTFORCE = 10;
+	private readonly MAXANGULARVELOCITY = 10;
 
 	findFloorY(character: Model): number | undefined {
 		const leftLeg = character.FindFirstChild("Left Leg") as BasePart | undefined;
 		if (leftLeg) {
-			const charBottomPosition = leftLeg.Position.sub(leftLeg.Size.div(2));
+			const charBottomPosition = leftLeg.Position.add(new Vector3(20, 20, 20));
+
+			// Create fresh raycast params each time
 			const raycastParams = new RaycastParams();
-			raycastParams.FilterType = Enum.RaycastFilterType.Include;
-			raycastParams.FilterDescendantsInstances = Workspace.WaitForChild("Map").GetDescendants();
+			raycastParams.FilterType = Enum.RaycastFilterType.Exclude;
+			raycastParams.FilterDescendantsInstances = [character];
+
 			const raycastResults = Workspace.Raycast(charBottomPosition, new Vector3(0, -100, 0), raycastParams);
+
+			print("Starting position: ", charBottomPosition);
+			print("Raycast params: ", raycastParams);
+			print("Results: ", raycastResults);
+
 			if (raycastResults && raycastResults.Instance) {
 				return raycastResults.Position.Y;
 			}
@@ -25,164 +35,126 @@ export class GrapplePhysics {
 	}
 
 	startGrapple(player: Player, hitPosition: Vector3) {
-		print("=== STARTING GRAPPLE ===");
-		print("Hit position:", hitPosition);
-
 		const character = player.Character as Model;
-		const hrp = character.WaitForChild("HumanoidRootPart", 4) as BasePart | undefined;
-		const humanoid = character.WaitForChild("Humanoid", 4) as Humanoid | undefined;
+		const root = character.FindFirstChild("HumanoidRootPart") as BasePart;
+		const groundLevel = this.findFloorY(character);
+		if (!groundLevel) return;
 
-		if (!hrp || !humanoid) {
-			print("ERROR: Missing HRP or Humanoid");
-			return;
+		if (this.connections.get(player)) return;
+
+		const ropeLength = (55 / 100) * (hitPosition.Y - groundLevel);
+
+		const downVector = new Vector3(0, -1, 0);
+
+		let angularVelocity = 0;
+
+		root.Anchored = true;
+
+		if (!this.playerInputVelocities.get(player)) {
+			this.playerInputVelocities.set(player, 1);
 		}
 
-		if (this.physicsStates.get(player) === true) {
-			print("Stopping previous grapple");
-			this.stopGrapple(player);
-		}
+		let swingDirection = root.CFrame.LookVector;
 
-		const initialPos = hrp.Position;
-		const ropeLength = initialPos.sub(hitPosition).Magnitude * 0.7;
-		print("Rope length:", ropeLength);
+		const ropeVector = root.Position.sub(hitPosition);
 
-		hrp.SetNetworkOwner(player);
+		let theta = math.acos(ropeVector.Unit.Dot(downVector));
 
-		humanoid.SetStateEnabled(Enum.HumanoidStateType.Physics, true);
-		humanoid.ChangeState(Enum.HumanoidStateType.Physics);
+		this.connections.set(
+			player,
+			RunService.Heartbeat.Connect((deltaTime: number) => {
+				const angularAcceleration = -(this.GRAVITY / ropeLength) * math.sin(theta);
 
-		let velocity = hrp.AssemblyLinearVelocity;
-		if (velocity.Magnitude < 5) {
-			const toGrapple = hitPosition.sub(initialPos).Unit;
-			const horizontalDir = new Vector3(toGrapple.X, 0, toGrapple.Z).Unit;
-			velocity = horizontalDir.mul(15).add(new Vector3(0, 8, 0));
-		}
-		print("Initial velocity:", velocity);
+				angularVelocity = angularVelocity + angularAcceleration * deltaTime;
 
-		this.physicsStates.set(player, true);
-		this.pendulumVelocities.set(player, velocity);
-		this.grapplePoints.set(player, hitPosition);
-		this.ropeLengths.set(player, ropeLength);
+				const inputVelocity = this.playerInputVelocities.get(player) as number;
 
-		print("Creating Heartbeat connection...");
+				if (this.playerInputKey.get(player) === "W") {
+					this.playerInputVelocities.set(player, inputVelocity + 0.1);
+				} else {
+					if (this.playerInputKey.get(player) === "S") {
+						this.playerInputVelocities.set(player, inputVelocity - 0.2);
+					}
+				}
 
-		const connection = RunService.Heartbeat.Connect((dt) => {
-			if (this.physicsStates.get(player) !== true) {
-				connection.Disconnect();
-				return;
-			}
+				this.playerInputVelocities.set(
+					player,
+					math.clamp(
+						this.playerInputVelocities.get(player) as number,
+						-this.MAXINPUTFORCE,
+						this.MAXINPUTFORCE,
+					),
+				);
 
-			let currentVelocity = this.pendulumVelocities.get(player);
-			const grapplePoint = this.grapplePoints.get(player);
-			const ropeLen = this.ropeLengths.get(player);
+				if (this.playerInputVelocities.get(player)) {
+					if (inputVelocity && inputVelocity !== 1) {
+						if (inputVelocity < 0) {
+							angularVelocity = angularVelocity - inputVelocity * deltaTime;
+						} else {
+							angularVelocity = angularVelocity + inputVelocity * deltaTime;
+						}
+					}
+				}
 
-			if (!currentVelocity || !grapplePoint || !ropeLen) {
-				this.stopGrapple(player);
-				return;
-			}
+				swingDirection = root.CFrame.LookVector;
 
-			const position = hrp.Position;
+				theta = theta + angularVelocity * deltaTime;
 
-			// First, constrain to rope length
-			const ropeVector = position.sub(grapplePoint);
-			const currentLength = ropeVector.Magnitude;
+				if (theta > this.MAXANGLE) {
+					theta = this.MAXANGLE;
+					angularVelocity = -angularVelocity * 1.01; // bounce back with damping
+				}
+				if (theta < -this.MAXANGLE) {
+					// Changed from -MAXANGLE to 0
+					theta = -this.MAXANGLE;
+					angularVelocity = -angularVelocity * 1.01;
+				}
 
-			let constrainedPosition = position;
-			if (currentLength > ropeLen) {
-				constrainedPosition = grapplePoint.add(ropeVector.Unit.mul(ropeLen));
-				hrp.CFrame = new CFrame(constrainedPosition);
-			}
+				angularVelocity = math.clamp(angularVelocity, -this.MAXANGULARVELOCITY, this.MAXANGULARVELOCITY);
 
-			// Now calculate physics from the constrained position
-			const finalRopeVector = constrainedPosition.sub(grapplePoint);
-			const ropeDirection = finalRopeVector.Unit;
+				this.playerAngularVelocity.set(player, angularVelocity);
 
-			// Apply gravity tangentially
-			const gravityForce = new Vector3(0, -this.GRAVITY, 0);
-			const radialComponent = ropeDirection.mul(gravityForce.Dot(ropeDirection));
-			const tangentialComponent = gravityForce.sub(radialComponent);
+				const horizontalOffset = swingDirection.mul(ropeLength * math.sin(theta));
+				const verticalOffset = new Vector3(0, -ropeLength * math.cos(theta), 0);
 
-			currentVelocity = currentVelocity.add(tangentialComponent.mul(dt));
-			currentVelocity = currentVelocity.mul(this.DAMPING);
+				const newPosition = hitPosition.add(horizontalOffset).add(verticalOffset);
 
-			// Project velocity to be tangent to rope
-			const radialVelocity = currentVelocity.Dot(ropeDirection);
-			currentVelocity = currentVelocity.sub(ropeDirection.mul(radialVelocity));
-
-			// Calculate new position
-			const newPosition = constrainedPosition.add(currentVelocity.mul(dt));
-
-			// Final constraint
-			const newRopeVector = newPosition.sub(grapplePoint);
-			const newLength = newRopeVector.Magnitude;
-
-			if (newLength > ropeLen) {
-				const finalPos = grapplePoint.add(newRopeVector.Unit.mul(ropeLen));
-				hrp.CFrame = new CFrame(finalPos);
-			} else {
-				hrp.CFrame = new CFrame(newPosition);
-			}
-
-			this.pendulumVelocities.set(player, currentVelocity);
-
-			const floorY = this.findFloorY(character);
-			if (floorY && hrp.Position.Y <= floorY + 4 && currentVelocity.Y < -15) {
-				this.stopGrapple(player);
-			}
-		});
-
-		this.grappleConnections.set(player, connection);
-		print("=== GRAPPLE STARTED ===");
+				root.Position = newPosition;
+			}),
+		);
 	}
 
-	applySwingInput(player: Player, inputDirection: Vector3) {
-		const currentVelocity = this.pendulumVelocities.get(player);
-		const isGrappling = this.physicsStates.get(player);
-
-		if (!currentVelocity && isGrappling) {
-			const character = player.Character as Model;
-			const hrp = character?.WaitForChild("HumanoidRootPart") as BasePart | undefined;
-			if (hrp) {
-				const vel = hrp.AssemblyLinearVelocity;
-				this.pendulumVelocities.set(player, vel);
-				const swingForce = inputDirection.mul(25);
-				const newVelocity = vel.add(swingForce);
-				this.pendulumVelocities.set(player, newVelocity);
-				print("Applied swing! New velocity:", newVelocity);
+	applySwingInput(player: Player, inputDirection: number) {
+		if (!this.connections.get(player)) return;
+		if (inputDirection !== undefined) {
+			if (inputDirection === -1) {
+				this.playerInputKey.set(player, "S");
 			}
-		} else if (currentVelocity && isGrappling) {
-			const swingForce = inputDirection.mul(25);
-			const newVelocity = currentVelocity.add(swingForce);
-			this.pendulumVelocities.set(player, newVelocity);
-			print("Applied swing! New velocity:", newVelocity);
+			if (inputDirection === 1) {
+				this.playerInputKey.set(player, "W");
+			}
+			if (inputDirection === 0) {
+				this.playerInputKey.set(player, "None");
+			}
 		}
 	}
 
 	stopGrapple(player: Player) {
-		if (this.physicsStates.get(player) !== true) {
-			return;
-		}
+		this.connections.get(player)?.Disconnect();
+		this.connections.delete(player);
+		const root = player.Character?.FindFirstChild("HumanoidRootPart") as BasePart;
+		root.Anchored = false;
 
-		print("Stopping grapple for", player.Name);
-
-		this.physicsStates.set(player, false);
-
-		const connection = this.grappleConnections.get(player);
-		if (connection) {
-			connection.Disconnect();
-			this.grappleConnections.delete(player);
-		}
-
-		this.pendulumVelocities.delete(player);
-		this.grapplePoints.delete(player);
-		this.ropeLengths.delete(player);
-
-		const character = player.Character as Model;
-		if (character) {
-			const humanoid = character.FindFirstChild("Humanoid") as Humanoid | undefined;
-			if (humanoid) {
-				humanoid.ChangeState(Enum.HumanoidStateType.Freefall);
-			}
+		const angularVelocity = this.playerAngularVelocity.get(player);
+		if (angularVelocity) {
+			const bodyVelocity = new Instance("BodyVelocity", root);
+			bodyVelocity.Velocity = new Vector3(angularVelocity ** 2, angularVelocity ** 2, 0);
+			task.delay(0.9, () => {
+				bodyVelocity.Destroy();
+				this.playerAngularVelocity.set(player, 0);
+				this.playerInputVelocities.set(player, 1);
+				this.playerInputKey.set(player, "None");
+			});
 		}
 	}
 }

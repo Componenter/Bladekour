@@ -38,17 +38,31 @@ do
 			}
 			Combat.Attack.send(AttackData)
 		end)
+		local W = false
+		local S = false
 		self.inputManager:onAction(InputAction.W, function(event)
 			if not self.middleware:validate(event) then
 				return nil
 			end
-			Movement.GrappleMovement.send("W")
+			local sendArgument = "W"
+			S = false
+			if W then
+				sendArgument = "None"
+			end
+			Movement.GrappleMovement.send(sendArgument)
+			W = not W
 		end)
 		self.inputManager:onAction(InputAction.S, function(event)
 			if not self.middleware:validate(event) then
 				return nil
 			end
-			Movement.GrappleMovement.send("S")
+			local sendArgument = "S"
+			W = false
+			if S then
+				sendArgument = "None"
+			end
+			Movement.GrappleMovement.send(sendArgument)
+			S = not S
 		end)
 		self.inputManager:onAction(InputAction.StartGrapple, function(event)
 			if not self.middleware:validate(event) then

@@ -63,12 +63,15 @@ do
 		end
 		local direction = nil
 		if input == "W" then
-			direction = root.CFrame.LookVector
+			direction = 1
 		end
 		if input == "S" then
-			direction = root.CFrame.LookVector * (-1)
+			direction = -1
 		end
-		if direction then
+		if input == "None" then
+			direction = 0
+		end
+		if direction ~= nil then
 			self.physicsEngine:applySwingInput(player, direction)
 		end
 	end

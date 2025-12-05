@@ -32,6 +32,14 @@ export class KeyboardHandler {
 			if (input.KeyCode === Enum.KeyCode.E) {
 				// Could trigger "StopBlocking" action
 			}
+
+			if (input.KeyCode === Enum.KeyCode.W) {
+				this.triggerAction(this.keyBindings.get(Enum.KeyCode.W) as InputAction);
+			}
+
+			if (input.KeyCode === Enum.KeyCode.S) {
+				this.triggerAction(this.keyBindings.get(Enum.KeyCode.S) as InputAction);
+			}
 		});
 	}
 

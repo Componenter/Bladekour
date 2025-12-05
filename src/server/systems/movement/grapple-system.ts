@@ -35,6 +35,7 @@ export class GrappleSystem {
 				};
 
 				this.grappleRopeVisualizer.showGrappleRope(visualizeGrappleData);
+
 				this.physicsEngine.startGrapple(player, packet.MousePosition3DSpace as Vector3);
 			}
 		} else {
@@ -52,15 +53,19 @@ export class GrappleSystem {
 		const root = character?.WaitForChild("HumanoidRootPart", 3) as BasePart;
 		if (!root) return;
 
-		let direction: Vector3 | undefined = undefined;
+		let direction: number | undefined = undefined;
 		if (input === "W") {
-			direction = root.CFrame.LookVector;
+			direction = 1;
 		}
 		if (input === "S") {
-			direction = root.CFrame.LookVector.mul(-1);
+			direction = -1;
 		}
 
-		if (direction) {
+		if (input === "None") {
+			direction = 0;
+		}
+
+		if (direction !== undefined) {
 			this.physicsEngine.applySwingInput(player, direction);
 		}
 	}
